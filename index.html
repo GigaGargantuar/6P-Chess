@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101714">
+  <meta name="description" content="A six-player chess variant played in a volume.">
+  <title>HexaChess — Volumetric chess</title>
+  <link rel="icon" href="./mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <meta name="hexachess-room-api" content="">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="./" aria-label="HexaChess home">
+        <span class="brand-emblem" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>HEXA<span class="brand-accent">CHESS</span></span>
+      </a>
+      <nav aria-label="Match actions">
+        <button id="rules-button" class="button button-quiet" aria-label="How to play"><span class="question-icon" aria-hidden="true">?</span><span class="rules-button-label">How to play</span></button>
+        <button id="online-button" class="button button-outline" type="button" aria-haspopup="dialog"><span id="online-button-label">Online</span></button>
+        <button id="restart-button" class="button button-outline"><span class="button-glyph" aria-hidden="true">＋</span> New match</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span><span id="match-mode">Local match</span></p>
+        <h1 id="page-title">Volumetric <span>chess</span></h1>
+        <p class="intro-copy">Six armies converge on a single 8 × 8 × 8 cube.</p>
+      </div>
+      <div class="geometry" aria-label="Board geometry">
+        <div><strong>06</strong><span>Armies</span></div>
+        <div><strong>896</strong><span>Board cells</span></div>
+        <div><strong>192</strong><span>Starting pieces</span></div>
+      </div>
+    </section>
+
+    <div class="match-layout">
+      <section class="panel board-panel" aria-labelledby="board-heading">
+        <div class="panel-header board-header">
+          <div class="panel-heading"><span class="grid-icon" aria-hidden="true"></span><h2 id="board-heading">Playing volume</h2></div>
+          <div class="view-switch" role="group" aria-label="Board view">
+            <button id="view-volume" aria-pressed="true"><span aria-hidden="true">◇</span> 3D board</button>
+            <button id="view-layers" aria-pressed="false"><span aria-hidden="true">▤</span> Layers</button>
+          </div>
+        </div>
+
+        <div id="layer-controls" class="layer-controls" hidden>
+          <div class="layer-axis">
+            <span aria-hidden="true">Axis</span>
+            <div id="axis-controls" class="axis-controls" role="group" aria-label="Slice axis">
+              <button data-axis="0" aria-pressed="true">X</button>
+              <button data-axis="1" aria-pressed="false">Y</button>
+              <button data-axis="2" aria-pressed="false">Z</button>
+            </div>
+          </div>
+          <div class="depth-control">
+            <button id="prev-layer" aria-label="Previous layer">‹</button>
+            <label class="sr-only" for="layer-depth">Layer depth</label>
+            <input id="layer-depth" type="range" min="-4" max="11" value="3">
+            <button id="next-layer" aria-label="Next layer">›</button>
+            <output id="layer-label" for="layer-depth"></output>
+          </div>
+        </div>
+
+        <div id="volume-stage" class="volume-stage">
+          <canvas id="volume" tabindex="0" aria-label="First-person 3D chess board" aria-describedby="volume-hint"></canvas>
+          <div class="stage-context">
+            <div class="stage-label" aria-hidden="true"><span class="stage-label-bar"></span><span id="projection-label">First person</span></div>
+            <label class="hill-control">
+              <span aria-hidden="true">◆</span><span class="sr-only">View a home hill</span>
+              <select id="focus-hill"><option value="" selected disabled>View a hill</option></select>
+            </label>
+          </div>
+          <div class="volume-controls" role="group" aria-label="Camera controls">
+            <button id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+            <button id="zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+            <button id="reset-camera" title="Return to center" aria-label="Return camera to the center">↺</button>
+          </div>
+          <div id="touch-movement" class="touch-movement" role="group" aria-label="Camera movement">
+            <div class="touch-horizontal">
+              <button data-movement="KeyW" aria-label="Move forward" tabindex="-1">↑</button>
+              <button data-movement="KeyA" aria-label="Strafe left" tabindex="-1">←</button>
+              <button data-movement="KeyS" aria-label="Move backward" tabindex="-1">↓</button>
+              <button data-movement="KeyD" aria-label="Strafe right" tabindex="-1">→</button>
+            </div>
+            <div class="touch-vertical">
+              <button data-movement="Space" aria-label="Rise" tabindex="-1">⇧</button>
+              <button data-movement="ShiftLeft" aria-label="Descend" tabindex="-1">⇩</button>
+            </div>
+          </div>
+          <div id="cell-readout" class="cell-readout" aria-hidden="true"></div>
+        </div>
+        <div id="volume-hint" class="volume-hint">
+          <span class="keyboard-guide">Click board to focus</span>
+          <span>Drag to look</span>
+          <span class="keyboard-guide"><kbd>W A S D</kbd> move</span>
+          <span class="keyboard-guide"><kbd>Space</kbd> rise <b>·</b> <kbd>Shift</kbd> descend</span>
+          <span class="touch-guide">Hold arrows to move</span>
+        </div>
+
+        <div class="board-footer">
+          <span id="board-status" role="status"></span>
+          <div class="board-tools">
+            <button id="demo-toggle" class="text-button" hidden>Pause demo</button>
+            <button id="piece-picker-button" class="text-button" aria-expanded="false" aria-controls="move-picker" hidden>Pieces <span aria-hidden="true">⌄</span></button>
+            <button id="move-picker-button" class="text-button" aria-expanded="false" aria-controls="move-picker" hidden>Destinations <span aria-hidden="true">⌄</span></button>
+          </div>
+        </div>
+        <div id="move-picker" class="move-picker" hidden></div>
+      </section>
+
+      <aside class="match-sidebar" aria-label="Match details">
+        <section class="panel player-panel" aria-labelledby="armies-heading">
+          <div class="panel-header">
+            <div class="panel-heading"><span class="panel-icon" aria-hidden="true">♜</span><h2 id="armies-heading">Armies</h2></div>
+            <span id="round" class="mono panel-meta">ROUND 01</span>
+          </div>
+          <div id="turn-banner" class="turn-banner" aria-live="polite"></div>
+          <ol id="player-list" class="player-list"></ol>
+        </section>
+
+        <section class="panel history-panel" aria-labelledby="history-heading">
+          <div class="panel-header">
+            <div class="panel-heading"><span class="panel-icon history-icon" aria-hidden="true">≡</span><h2 id="history-heading">Move history</h2></div>
+            <button id="undo" class="text-button undo-button" disabled><span aria-hidden="true">↶</span> Undo</button>
+          </div>
+          <div id="move-history" class="history-content"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <dialog id="rules" class="dialog" aria-labelledby="rules-title">
+    <div class="dialog-content">
+      <div class="dialog-header"><h2 id="rules-title">How to play</h2><form method="dialog"><button class="close-button" aria-label="Close rules">×</button></form></div>
+      <p>Assign each army to a human or a bot in <strong>New match</strong>. Humans share this device and take turns. Choose <strong>6-bot demo</strong> to watch a full match. On your turn, choose one of your pieces, then a highlighted destination.</p>
+      <p id="online-help">Use <strong>Online</strong> to host a room, join by invite or code, or watch a match.</p>
+      <p>Each army’s last move has a dashed origin outline and a solid destination outline.</p>
+      <p>The camera starts at the center, facing your army or the opening army in a demo. Click the board to focus. Use <strong>WASD</strong> to move, <strong>Space</strong> to rise, and <strong>Shift</strong> to descend. Drag to look around.</p>
+      <p>In <strong>Layers</strong>, choose an axis and depth to highlight a cross section of the 3D board. The view snaps to a slice along the active army’s direction of advance. Only destinations on the highlighted slice are shown. Use <strong>Pieces</strong> and <strong>Destinations</strong> to make selections by coordinate.</p>
+      <h3>The board</h3>
+      <p>An 8 × 8 × 8 core meets six centered 4 × 4 × 4 home volumes. Each army starts with its back rank on the outermost plane and 16 pawns one plane inward.</p>
+      <div class="formation" aria-label="Back rank pattern B N N B, N Q R N, N R K N, B N N B"><code>BNNB<br>NQRN<br>NRKN<br>BNNB</code></div>
+      <h3>Piece movement</h3>
+      <dl class="rules-list">
+        <div><dt>Rook</dt><dd>Slides along one axis.</dd></div>
+        <div><dt>Bishop</dt><dd>Slides diagonally along two or three axes, taking equal steps on each.</dd></div>
+        <div><dt>Queen</dt><dd>Slides along one axis or a two-axis diagonal.</dd></div>
+        <div><dt>Knight</dt><dd>Jumps two cells along one axis and one along a second.</dd></div>
+        <div><dt>King</dt><dd>Steps to any of the 26 neighboring cells.</dd></div>
+        <div><dt>Pawn</dt><dd>Steps one cell straight ahead into an empty cell. On its first move, it may advance two cells if both are empty. Captures one layer ahead in any of the eight cells surrounding the straight-ahead cell.</dd></div>
+      </dl>
+      <p>Each army’s pawns advance inward along its face axis. A pawn that crosses the midpoint plane on that axis promotes to a queen, rook, bishop, or knight. The midpoint lies between layers 3 and 4 and passes through the central 2 × 2 × 2 block.</p>
+      <h3>Hills and checkmate</h3>
+      <p>Each army’s hill is the four gold cells on its back rank that start with its king, queen, and two rooks. Move your king safely onto a rival hill to eliminate that army. Your moves must keep your king out of check.</p>
+      <p>An army is checkmated if its king is in check when its turn begins and it has no legal move. The last army standing wins.</p>
+      <p>Turns follow North, East, South, West, Zenith, and Nadir. Armies with no legal move and no check are skipped. The match is a draw if every remaining army is blocked.</p>
+      <h3>Scoring</h3>
+      <p>Eliminating an army by claiming its hill or delivering checkmate earns <strong>20 points</strong>. Capturing a piece earns its value.</p>
+      <dl class="score-rules">
+        <div><dt>Queen</dt><dd>9</dd></div>
+        <div><dt>Bishop</dt><dd>5</dd></div>
+        <div><dt>Rook</dt><dd>4</dd></div>
+        <div><dt>Knight</dt><dd>3</dd></div>
+        <div><dt>Pawn</dt><dd>1</dd></div>
+      </dl>
+      <form method="dialog"><button class="button button-primary">Back to match</button></form>
+    </div>
+  </dialog>
+
+  <dialog id="online" class="dialog online-dialog" aria-labelledby="online-title">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2 id="online-title">Online play</h2>
+        <form method="dialog"><button class="close-button" aria-label="Close online play">×</button></form>
+      </div>
+
+      <div id="online-entry">
+        <p>Host a match or join friends using their room code.</p>
+        <div class="online-create-row">
+          <div class="online-field">
+            <label for="online-seat">Army</label>
+            <select id="online-seat" class="online-input"></select>
+          </div>
+          <button id="online-create" class="button button-primary" type="button">Create room</button>
+        </div>
+        <form id="online-join" class="online-join">
+          <div class="online-field">
+            <label for="online-code">8-character room code</label>
+            <input id="online-code" class="online-input room-code-input" name="room" type="text" required minlength="8" maxlength="8" pattern="[A-Za-z0-9]{8}" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          </div>
+          <div class="online-join-actions">
+            <button class="button button-outline" type="submit">Join room</button>
+            <button id="online-watch" class="button button-outline" type="button">Watch</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="online-room" hidden>
+        <div class="room-code-row"><span>Room code</span><strong id="room-code"></strong></div>
+        <div class="online-field room-invite">
+          <label for="room-invite">Invite link</label>
+          <div class="room-invite-row">
+            <input id="room-invite" class="online-input" type="url" readonly>
+            <button id="room-copy" class="button button-outline" type="button">Copy</button>
+          </div>
+        </div>
+        <ul id="room-seats" class="room-seats" aria-label="Room seats"></ul>
+        <p id="room-message" role="status"></p>
+        <div class="room-actions">
+          <button id="room-leave" class="button button-quiet" type="button">Back to local</button>
+          <button id="room-play" class="button button-outline" type="button">View board</button>
+          <button id="room-start" class="button button-primary" type="button">Start match</button>
+        </div>
+      </div>
+
+      <p id="online-status" role="status"></p>
+    </div>
+  </dialog>
+
+  <dialog id="restart" class="dialog setup-dialog" aria-labelledby="restart-title">
+    <div class="dialog-content">
+      <div class="dialog-header"><h2 id="restart-title">New match</h2></div>
+      <p>Assign each army to a human or a bot.</p>
+      <form method="dialog">
+        <div class="setup-presets" role="group" aria-label="Lineup presets">
+          <button id="setup-solo" type="button" class="button button-outline" aria-pressed="false">Solo vs 5 bots</button>
+          <button id="setup-demo" type="button" class="button button-outline" aria-pressed="false">6-bot demo</button>
+          <button id="setup-all-human" type="button" class="button button-outline" aria-pressed="true">All human</button>
+        </div>
+        <div id="match-seats" class="match-seats" role="group" aria-label="Army controllers"></div>
+        <p id="setup-status" role="status"></p>
+        <p id="replace-match" class="setup-note" hidden>Starting a match replaces the current board and move history.</p>
+        <div class="dialog-actions">
+          <button class="button button-outline" value="cancel" autofocus>Cancel</button>
+          <button id="start-match" class="button button-primary" value="restart">Start match</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog id="promotion" class="dialog small-dialog" aria-labelledby="promotion-title">
+    <div class="dialog-content">
+      <div class="dialog-header"><h2 id="promotion-title">Promote pawn</h2><form method="dialog"><button class="close-button" aria-label="Cancel promotion">×</button></form></div>
+      <p>Your pawn crossed its center plane. Choose its new piece.</p>
+      <form id="promotion-options" class="promotion-options" method="dialog"></form>
+    </div>
+  </dialog>
+
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>
