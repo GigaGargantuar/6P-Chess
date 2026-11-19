@@ -3,11 +3,11 @@
   "main": "dist/server/index.js",
   "compatibility_date": "2025-01-01",
   "vars": {
-    "HEXACHESS_FRONTEND_ORIGIN": "https://gigagargantuar.github.io"
+    "HEXACHESS_FRONTEND_ORIGIN":"https://gigagargantuar.github.io"
   },
   "d1_databases": [
     {
-      "binding": "hexachess_rooms",
+      "DB": "hexachess_rooms",
       "database_name": "hexachess-rooms",
       "database_id": "204ff22e-42d6-4300-a3f5-3c1a38aa7289",
       "migrations_dir": "drizzle"
