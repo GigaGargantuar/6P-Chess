@@ -7,7 +7,7 @@
   },
   "d1_databases": [
     {
-      "DB": "hexachess_rooms",
+      "binding": "DB",
       "database_name": "hexachess-rooms",
       "database_id": "204ff22e-42d6-4300-a3f5-3c1a38aa7289",
       "migrations_dir": "drizzle"
