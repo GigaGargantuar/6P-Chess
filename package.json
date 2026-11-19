@@ -1,0 +1,12 @@
+{
+  "name": "hexachess",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-worker.mjs",
+    "build:pages": "node scripts/build-pages.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}
